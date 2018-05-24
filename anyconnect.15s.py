@@ -52,6 +52,14 @@ def get_state():
     except:
         return ERROR
 
+def read_keychain(key):
+    try:
+        args = ['/usr/bin/security', 'find-generic-password', '-w', '-s', key]
+        return subprocess.check_output(args).splitlines()[0]
+    except:
+        notify('Failed to read from a keychain')
+        raise
+
 def connect(profile):
     try:
         config = ConfigParser.ConfigParser()
@@ -67,25 +75,22 @@ def connect(profile):
                 username = config.get(profile, 'username')
                 proc.expect('Username:')
                 proc.sendline(username)
-                password = config.get(profile, 'password')
+                password = read_keychain(config.get(profile, 'password'))
                 proc.expect('Password:')
                 proc.sendline(password)
                 password2 = config.get(profile, 'password2')
                 if password2 == 'totp':
-                    secret = config.get(profile, 'secret')
-                    totp = pyotp.TOTP(secret)
+                    secret = read_keychain(config.get(profile, 'secret'))
                     password = pyotp.TOTP(secret).now()
                     proc.expect('Second Password:')
                     proc.sendline(password)
                 idx = proc.expect(['state: Connected', 'Login failed'])
                 if idx == 0:
                     proc.wait()
-                    time.sleep(5)
                     notify('Successfully connected')
                     return CONNECTED
                 proc.terminate(True)
                 notify('Login failed')
-                return ERROR
         except:
             notify('Failed to connect to VPN')
     except:
