@@ -17,6 +17,7 @@ import ConfigParser
 
 SCRIPT=os.path.realpath(__file__)
 VPN = '/opt/cisco/anyconnect/bin/vpn'
+SECURITY = '/usr/bin/security'
 CONFIG_DIR = os.path.expanduser('~/.bitbar_anyconnect')
 LOGFILE = None # CONFIG_DIR + '/log.txt'
 if LOGFILE: LOGFILE = open(LOGFILE, 'wb')
@@ -54,7 +55,7 @@ def get_state():
 
 def read_keychain(key):
     try:
-        args = ['/usr/bin/security', 'find-generic-password', '-w', '-s', key]
+        args = [SECURITY, 'find-generic-password', '-w', '-s', key]
         return subprocess.check_output(args).splitlines()[0]
     except:
         notify('Failed to read from a keychain')
